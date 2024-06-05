@@ -1,8 +1,8 @@
-const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');// Import jsonwebtoken
 const Seller = require('../models/Seller');
 
 const authMiddleware = async (req, res, next) => {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
+    const token = req.header('Authorization')?.replace('Bearer ', '');// Get token from Authorization header
     if (!token) {
         return res.status(401).json({ error: 'Access denied, no token provided' });
     }

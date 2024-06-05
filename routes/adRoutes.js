@@ -3,6 +3,7 @@ const router = express.Router();
 const adController = require('../controllers/adController');
 const authMiddleware = require('../middleware/authMiddleware');
 
+// Route to create a advertisement
 router.post('/ads', authMiddleware, adController.createAd);
 router.get('/ads', adController.getAds);
 router.get('/ads/:id', adController.getAd);

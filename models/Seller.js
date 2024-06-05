@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
+// Define the Seller model
 const Seller = sequelize.define('Seller', {
     sellerId: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     name: { type: DataTypes.STRING(100), allowNull: false },
@@ -10,7 +11,7 @@ const Seller = sequelize.define('Seller', {
     createdAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
     updatedAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
 }, {
-    tableName: 'seller',
+    tableName: 'seller',// Table name
     timestamps: false
 });
 

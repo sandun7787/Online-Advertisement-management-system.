@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Seller = require('../models/Seller');
 
+// Register a new seller
 exports.register = async (req, res) => {
     const { name, email, password, contact } = req.body;
     try {
@@ -12,7 +13,7 @@ exports.register = async (req, res) => {
         res.status(500).json({ error: 'Error registering seller' });
     }
 };
-
+// Login a seller
 exports.login = async (req, res) => {
     const { email, password } = req.body;
     try {

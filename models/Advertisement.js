@@ -2,6 +2,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const Image = require('./Image');
 
+// Define the Advertisement model
 const Advertisement = sequelize.define('Advertisement', {
     addId: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     topic: { type: DataTypes.STRING(100), allowNull: false },
@@ -14,10 +15,11 @@ const Advertisement = sequelize.define('Advertisement', {
     createdAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
     updatedAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
 }, {
-    tableName: 'advertisement',
+    tableName: 'advertisement',// Table name
     timestamps: false
 });
 
+// Define associations
 Advertisement.hasMany(Image, { foreignKey: 'adId' });
 Image.belongsTo(Advertisement, { foreignKey: 'adId' });
 
