@@ -1,24 +1,23 @@
-const jwt = require('jsonwebtoken');// Import jsonwebtoken
-const Seller = require('../models/Seller');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
-const authMiddleware = async (req, res, next) => {
-    const token = req.header('Authorization')?.replace('Bearer ', '');// Get token from Authorization header
+const validateToken = (req, res, next) => {
+    const token = req.headers.authorization.split(" ")[1];
+
     if (!token) {
-        return res.status(401).json({ error: 'Access denied, no token provided' });
+        return res.status(401).json({ error: "User not logged in!" });
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.SECRET_KEY);
-        const seller = await Seller.findByPk(decoded.id);
-        if (!seller) {
-            return res.status(401).json({ error: 'Invalid token' });
+        const validToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        if (validToken) {
+            req.user = validToken;
+            next();
         }
-
-        req.user = { id: seller.sellerId };
-        next();
     } catch (error) {
-        res.status(400).json({ error: 'Invalid token' });
+        console.error("Error validating token:", error);
+        return res.status(500).json({ error: "Invalid token or internal server error" });
     }
-};
+}
 
-module.exports = authMiddleware;
+module.exports = validateToken;
