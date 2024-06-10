@@ -1,78 +1,90 @@
-const Seller = require('../models/Seller');
+const db = require('../models');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
-// Create a new seller
-exports.createSeller = async (req, res) => {
-    const { name, email, password, contact } = req.body;
+const Seller = db.sellers;
+
+const registerSeller = async (req, res) => {
     try {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newSeller = await Seller.create({ name, email, password: hashedPassword, contact });
-        res.status(201).json(newSeller);
+        const { name, email, contact, password } = req.body;
+        const hashedPassword = bcrypt.hashSync(password, 10);
+
+        const newSeller = await Seller.create({
+            name,
+            email,
+            contact,
+            password: hashedPassword
+        });
+
+        res.status(201).json({ message: "Seller registered successfully", newSeller });
     } catch (error) {
-        res.status(500).json({ error: 'Error creating seller' });
+        console.error("Error registering seller:", error);
+        res.status(500).json({ error: "An error occurred while registering seller" });
     }
 };
 
-// Get all sellers
-exports.getSellers = async (req, res) => {
+const loginSeller = async (req, res) => {
     try {
-        const sellers = await Seller.findAll({ attributes: ['sellerId', 'name', 'email', 'contact'] });
-        res.status(200).json(sellers);
-    } catch (error) {
-        res.status(500).json({ error: 'Error fetching sellers' });
-    }
-};
+        const { email, password } = req.body;
+        const seller = await Seller.findOne({ where: { email } });
 
-// Get a single seller by ID
-exports.getSellerById = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const seller = await Seller.findByPk(id, { attributes: ['sellerId', 'name', 'email', 'contact'] });
         if (!seller) {
-            return res.status(404).json({ error: 'Seller not found' });
+            return res.status(404).json({ error: "Seller not found" });
         }
+
+        const isPasswordValid = bcrypt.compareSync(password, seller.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({ error: "Invalid password" });
+        }
+
+        const token = jwt.sign({ id: seller.sellerId, name: seller.name }, process.env.JWT_SECRET_KEY, {
+            expiresIn: '1h'
+        });
+
+        res.status(200).json({ message: "Login successful", token });
+    } catch (error) {
+        console.error("Error logging in seller:", error);
+        res.status(500).json({ error: "An error occurred while logging in" });
+    }
+};
+
+const getProfile = async (req, res) => {
+    try {
+        const sellerId = req.user.id;
+        const seller = await Seller.findOne({ where: { sellerId }, attributes: { exclude: ['password'] } });
+
+        if (!seller) {
+            return res.status(404).json({ error: "Seller not found" });
+        }
+
         res.status(200).json(seller);
     } catch (error) {
-        res.status(500).json({ error: 'Error fetching seller' });
+        console.error("Error getting profile:", error);
+        res.status(500).json({ error: "An error occurred while getting profile" });
     }
 };
 
-// Update a seller by ID
-exports.updateSeller = async (req, res) => {
-    const { id } = req.params;
-    const { name, email, password, contact } = req.body;
+const updateProfile = async (req, res) => {
     try {
-        const seller = await Seller.findByPk(id);
-        if (!seller) {
-            return res.status(404).json({ error: 'Seller not found' });
-        }
+        const sellerId = req.user.id;
+        const { name, contact, password } = req.body;
 
-        const hashedPassword = password ? await bcrypt.hash(password, 10) : seller.password;
+        const updatedSeller = await Seller.update(
+            { name, contact, password: bcrypt.hashSync(password, 10) },
+            { where: { sellerId } }
+        );
 
-        seller.name = name || seller.name;
-        seller.email = email || seller.email;
-        seller.password = hashedPassword;
-        seller.contact = contact || seller.contact;
-
-        await seller.save();
-        res.status(200).json(seller);
+        res.status(200).json({ message: "Profile updated successfully", updatedSeller });
     } catch (error) {
-        res.status(500).json({ error: 'Error updating seller' });
+        console.error("Error updating profile:", error);
+        res.status(500).json({ error: "An error occurred while updating profile" });
     }
 };
 
-// Delete a seller by ID
-exports.deleteSeller = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const seller = await Seller.findByPk(id);
-        if (!seller) {
-            return res.status(404).json({ error: 'Seller not found' });
-        }
-
-        await seller.destroy();
-        res.status(200).json({ message: 'Seller deleted' });
-    } catch (error) {
-        res.status(500).json({ error: 'Error deleting seller' });
-    }
+module.exports = {
+    registerSeller,
+    loginSeller,
+    getProfile,
+    updateProfile
 };
